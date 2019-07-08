@@ -27,9 +27,9 @@ var port = ":5000"
 var temps, _ = template.ParseGlob("./templates/*.html")
 
 // Connect to database and get collection to write and read to/from
-var databaseConnection = "mongodb://localhost:27017"
-var client = ConnectMongo(databaseConnection)
-var collection = client.Database("Maverick").Collection("Website")
+// var databaseConnection = "mongodb://localhost:27017"
+// var client = ConnectMongo(databaseConnection)
+// var collection = client.Database("Maverick").Collection("Website")
 
 // Static folder
 var staticLoc = "./static"
