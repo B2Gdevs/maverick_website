@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
+	"io/ioutil"
 	"log"
+	"maverick_website/models"
 	"net/http"
 	"os"
 	"time"
@@ -21,9 +24,9 @@ var port = os.Getenv("PORT")
 var temps, _ = template.ParseGlob("./templates/*.html")
 
 // Connect to database and get collection to write and read to/from
-// var databaseConnection = "mongodb://localhost:27017"
-// var client = ConnectMongo(databaseConnection)
-// var collection = client.Database("Maverick").Collection("Website")
+var databaseConnection = "mongodb://localhost:27017"
+var client = ConnectMongo(databaseConnection)
+var collection = client.Database("Maverick").Collection("Website")
 
 // Static folder
 var staticLoc = "./static"
@@ -70,24 +73,24 @@ func copyContent(src string, dst string) error {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	// res, err := http.Get("http://" + host + port + "/Media")
-	// body, err := ioutil.ReadAll(res.Body)
-	// if err != nil {
-	// 	fmt.Println("error occured trying to get media in handler")
-	// 	log.Println(err)
-	// }
-	// defer res.Body.Close()
-	// Media := []models.Media{}
-	// json.Unmarshal(body, &Media)
-	// data := struct {
-	// 	Data []models.Media
-	// }{
-	// 	Data: Media,
-	// }
+	res, err := http.Get("http://" + host + port + "/Media")
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println("error occured trying to get media in handler")
+		log.Println(err)
+	}
+	defer res.Body.Close()
+	Media := []models.Media{}
+	json.Unmarshal(body, &Media)
+	data := struct {
+		Data []models.Media
+	}{
+		Data: Media,
+	}
 
-	// temps.ExecuteTemplate(w, "index.html", data)
+	temps.ExecuteTemplate(w, "index.html", data)
 	// Temp
-	temps.ExecuteTemplate(w, "index.html", nil)
+	// temps.ExecuteTemplate(w, "index.html", nil)
 }
 
 func GetAllMedia(w http.ResponseWriter, r *http.Request) {
