@@ -21,8 +21,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var host = "localhost"
-var port = ":8110"
+var port = ":5000"
 
 // parse files and have templated html files created.
 var temps, _ = template.ParseGlob("./templates/*.html")
@@ -208,6 +207,6 @@ func main() {
 	r.HandleFunc("/Photos", AddPhoto).Methods("POST")
 	r.PathPrefix("/resources/").Handler(http.StripPrefix("/resources", http.FileServer(http.Dir(staticLoc))))
 
-	log.Fatal(http.ListenAndServe(host+port, r))
+	log.Fatal(http.ListenAndServe(port, r))
 
 }
