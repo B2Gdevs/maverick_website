@@ -18,6 +18,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var host = "localhost"
 var port = os.Getenv("PORT")
 
 // parse files and have templated html files created.
