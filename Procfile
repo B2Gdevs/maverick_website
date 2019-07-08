@@ -1,1 +1,1 @@
-web: maverick_website/bin/main
+web: bin/maverick_website
