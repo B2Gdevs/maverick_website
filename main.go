@@ -9,8 +9,12 @@ import (
 	"io/ioutil"
 	"log"
 	"maverick_website/models"
+	"maverick_website/utility"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -19,16 +23,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var host = "localhost"
-var port = os.Getenv("PORT")
+var jsonData, err = utility.GetDebugParams("app_config.json")
+var host = utility.GetEnv("HOST", jsonData["HOST"])
+var port = utility.GetEnv("PORT", jsonData["PORT"])
+var mongoPass = utility.GetEnv("MONGOPASS", jsonData["MONGOPASS"])
 
-// parse files and have templated html files created.
-var temps, _ = template.ParseGlob("./templates/*.html")
-
-// Connect to database and get collection to write and read to/from
-var databaseConnection = "mongodb://localhost:27017"
+var databaseConnection = fmt.Sprintf("mongodb+srv://Ben:%s@maverick-yqcfp.mongodb.net/test?retryWrites=true&w=majority", url.QueryEscape(mongoPass))
 var client = ConnectMongo(databaseConnection)
 var collection = client.Database("Maverick").Collection("Website")
+
+var temps, _ = template.ParseGlob("./templates/*.html")
 
 // Static folder
 var staticLoc = "./static"
@@ -75,7 +79,7 @@ func copyContent(src string, dst string) error {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	res, err := http.Get("http://" + host + port + "/Media")
+	res, err := http.Get("http://" + host + ":" + port + "/Media")
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		fmt.Println("error occured trying to get media in handler")
@@ -110,80 +114,80 @@ func GetAllMedia(w http.ResponseWriter, r *http.Request) {
 		media = append(media, temp)
 	}
 
-	// json.NewEncoder(w).Encode(media)
+	json.NewEncoder(w).Encode(media)
 }
 
 func GetAllVideos(w http.ResponseWriter, r *http.Request) {
-	// ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	// cur, err := collection.Find(ctx, bson.M{"filetype": "video"})
-	// defer cur.Close(ctx)
-	// if err != nil {
-	// 	fmt.Print("error getting files")
-	// 	log.Println(err)
-	// }
-	// media := []models.Media{}
-	// temp := models.Media{}
-	// for cur.Next(ctx) {
-	// 	cur.Decode(&temp)
-	// 	media = append(media, temp)
-	// }
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	cur, err := collection.Find(ctx, bson.M{"filetype": "video"})
+	defer cur.Close(ctx)
+	if err != nil {
+		fmt.Print("error getting files")
+		log.Println(err)
+	}
+	media := []models.Media{}
+	temp := models.Media{}
+	for cur.Next(ctx) {
+		cur.Decode(&temp)
+		media = append(media, temp)
+	}
 
-	// json.NewEncoder(w).Encode(media)
+	json.NewEncoder(w).Encode(media)
 }
 
 func GetAllPhotos(w http.ResponseWriter, r *http.Request) {
-	// ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	// cur, err := collection.Find(ctx, bson.M{"filetype": "photo"})
-	// defer cur.Close(ctx)
-	// if err != nil {
-	// 	fmt.Print("error getting files")
-	// 	log.Println(err)
-	// }
-	// media := []models.Media{}
-	// temp := models.Media{}
-	// for cur.Next(ctx) {
-	// 	cur.Decode(&temp)
-	// 	media = append(media, temp)
-	// }
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	cur, err := collection.Find(ctx, bson.M{"filetype": "photo"})
+	defer cur.Close(ctx)
+	if err != nil {
+		fmt.Print("error getting files")
+		log.Println(err)
+	}
+	media := []models.Media{}
+	temp := models.Media{}
+	for cur.Next(ctx) {
+		cur.Decode(&temp)
+		media = append(media, temp)
+	}
 
-	// json.NewEncoder(w).Encode(media)
+	json.NewEncoder(w).Encode(media)
 }
 
 func AddVideo(w http.ResponseWriter, r *http.Request) {
-	// ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	// data := models.Media{}
-	// json.NewDecoder(r.Body).Decode(&data)
-	// data.IsVideo = true
-	// temp := data.FilePath
-	// data.FilePath = path.Join(staticURL, filepath.Base(data.FilePath))
-	// if err := copyFile(temp, path.Join(staticLoc, filepath.Base(data.FilePath))); err != nil {
-	// 	log.Println("error when copying file.")
-	// 	log.Println(err)
-	// }
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	data := models.Media{}
+	json.NewDecoder(r.Body).Decode(&data)
+	data.IsVideo = true
+	temp := data.FilePath
+	data.FilePath = path.Join(staticURL, filepath.Base(data.FilePath))
+	if err := copyFile(temp, path.Join(staticLoc, filepath.Base(data.FilePath))); err != nil {
+		log.Println("error when copying file.")
+		log.Println(err)
+	}
 
-	// _, err := collection.InsertOne(ctx, data)
-	// if err != nil {
-	// 	fmt.Println("yolo")
-	// 	log.Println(err)
-	// }
+	_, err := collection.InsertOne(ctx, data)
+	if err != nil {
+		fmt.Println("yolo")
+		log.Println(err)
+	}
 }
 
 func AddPhoto(w http.ResponseWriter, r *http.Request) {
-	// ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	// data := models.Media{}
-	// json.NewDecoder(r.Body).Decode(&data)
-	// data.IsPhoto = true
-	// temp := data.FilePath
-	// data.FilePath = path.Join(staticURL, filepath.Base(data.FilePath))
-	// if err := copyFile(temp, path.Join(staticLoc, filepath.Base(data.FilePath))); err != nil {
-	// 	log.Println("error when copying file.")
-	// 	log.Println(err)
-	// }
-	// _, err := collection.InsertOne(ctx, data)
-	// if err != nil {
-	// 	fmt.Println("yolo")
-	// 	log.Println(err)
-	// }
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	data := models.Media{}
+	json.NewDecoder(r.Body).Decode(&data)
+	data.IsPhoto = true
+	temp := data.FilePath
+	data.FilePath = path.Join(staticURL, filepath.Base(data.FilePath))
+	if err := copyFile(temp, path.Join(staticLoc, filepath.Base(data.FilePath))); err != nil {
+		log.Println("error when copying file.")
+		log.Println(err)
+	}
+	_, err := collection.InsertOne(ctx, data)
+	if err != nil {
+		fmt.Println("yolo")
+		log.Println(err)
+	}
 }
 
 func ConnectMongo(connection string) *mongo.Client {
