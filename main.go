@@ -174,7 +174,6 @@ func AddVideo(w http.ResponseWriter, r *http.Request) {
 
 	_, err := collection.InsertOne(ctx, data)
 	if err != nil {
-		fmt.Println("yolo")
 		log.Println(err)
 	}
 }
@@ -192,9 +191,15 @@ func AddPhoto(w http.ResponseWriter, r *http.Request) {
 	}
 	_, err := collection.InsertOne(ctx, data)
 	if err != nil {
-		fmt.Println("yolo")
 		log.Println(err)
 	}
+}
+
+func deleteMedia(w http.ResponseWriter, r *http.Request) {
+	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+	data := models.Media{}
+	json.NewDecoder(r.Body).Decode(&data)
+	collection.DeleteOne(ctx, bson.M{"filepath": data.FilePath})
 }
 
 func ConnectMongo(connection string) *mongo.Client {
@@ -213,8 +218,10 @@ func main() {
 	r.HandleFunc("/Media", GetAllMedia).Methods("GET")
 	r.HandleFunc("/Videos", GetAllVideos).Methods("GET")
 	r.HandleFunc("/Videos", AddVideo).Methods("POST")
+	r.HandleFunc("/Videos", deleteMedia).Methods("DELETE")
 	r.HandleFunc("/Photos", GetAllPhotos).Methods("GET")
 	r.HandleFunc("/Photos", AddPhoto).Methods("POST")
+	r.HandleFunc("/Photos", deleteMedia).Methods("DELETE")
 	r.PathPrefix("/resources/").Handler(http.StripPrefix("/resources", http.FileServer(http.Dir(staticLoc))))
 
 	log.Fatal(http.ListenAndServe(":"+port, r))
