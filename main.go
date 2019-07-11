@@ -79,7 +79,14 @@ func copyContent(src string, dst string) error {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	res, err := http.Get("http://" + host + ":" + port + "/Media")
+	var res *http.Response
+	var err error
+	if host == "localhost" {
+		res, err = http.Get("http://" + host + ":" + port + "/Media")
+	} else {
+		res, err = http.Get(host + "/Media")
+	}
+
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		fmt.Println("error occured trying to get media in handler")
