@@ -113,9 +113,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 func GetAllMedia(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	fmt.Print(ctx)
 	cur, err := collection.Find(ctx, bson.M{})
-	fmt.Print(cur)
 
 	defer cur.Close(ctx)
 	if err != nil {
@@ -226,6 +224,8 @@ func ConnectMongo(connection string) *mongo.Client {
 }
 
 func main() {
+	fmt.Print(nil)
+	fmt.Printf(mongoPass)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/", handler)
