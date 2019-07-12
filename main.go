@@ -112,21 +112,20 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAllMedia(w http.ResponseWriter, r *http.Request) {
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	cur, err := collection.Find(ctx, bson.M{})
+	cur, err := collection.Find(nil, bson.M{})
 	fmt.Println("cursor")
 	fmt.Println(cur)
 	fmt.Println("cursor")
 	fmt.Println(bson.M{})
 
-	defer cur.Close(ctx)
+	defer cur.Close(context.Background())
 	if err != nil {
 		fmt.Print("error getting files")
 		log.Println(err)
 	} else {
 		media := []models.Media{}
 		temp := models.Media{}
-		for cur.Next(ctx) {
+		for cur.Next(context.Background()) {
 			cur.Decode(&temp)
 			media = append(media, temp)
 		}
