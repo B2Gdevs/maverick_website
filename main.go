@@ -227,7 +227,7 @@ func ConnectMongo(connection string) *mongo.Client {
 }
 
 func main() {
-
+	fmt.Print(collection)
 	r := mux.NewRouter()
 	r.HandleFunc("/", handler)
 	r.HandleFunc("/Media", GetAllMedia).Methods("GET")
