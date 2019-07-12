@@ -197,6 +197,7 @@ func AddPhoto(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&data)
 	data.IsPhoto = true
 	temp := data.FilePath
+	filepath.Base(data.FilePath)
 	data.FilePath = path.Join(staticURL, filepath.Base(data.FilePath))
 	if err := copyFile(temp, path.Join(staticLoc, filepath.Base(data.FilePath))); err != nil {
 		log.Println("error when copying file.")
