@@ -117,6 +117,7 @@ func GetAllMedia(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("cursor")
 	fmt.Println(cur)
 	fmt.Println("cursor")
+	fmt.Println(bson.M{})
 
 	defer cur.Close(ctx)
 	if err != nil {
