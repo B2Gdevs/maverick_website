@@ -113,15 +113,17 @@ func GetAllMedia(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Print("error getting files")
 		log.Println(err)
-	}
-	media := []models.Media{}
-	temp := models.Media{}
-	for cur.Next(ctx) {
-		cur.Decode(&temp)
-		media = append(media, temp)
+	} else {
+		media := []models.Media{}
+		temp := models.Media{}
+		for cur.Next(ctx) {
+			cur.Decode(&temp)
+			media = append(media, temp)
+		}
+
+		json.NewEncoder(w).Encode(media)
 	}
 
-	json.NewEncoder(w).Encode(media)
 }
 
 func GetAllVideos(w http.ResponseWriter, r *http.Request) {
@@ -131,15 +133,17 @@ func GetAllVideos(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Print("error getting files")
 		log.Println(err)
-	}
-	media := []models.Media{}
-	temp := models.Media{}
-	for cur.Next(ctx) {
-		cur.Decode(&temp)
-		media = append(media, temp)
+	} else {
+		media := []models.Media{}
+		temp := models.Media{}
+		for cur.Next(ctx) {
+			cur.Decode(&temp)
+			media = append(media, temp)
+		}
+
+		json.NewEncoder(w).Encode(media)
 	}
 
-	json.NewEncoder(w).Encode(media)
 }
 
 func GetAllPhotos(w http.ResponseWriter, r *http.Request) {
@@ -149,15 +153,17 @@ func GetAllPhotos(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Print("error getting files")
 		log.Println(err)
-	}
-	media := []models.Media{}
-	temp := models.Media{}
-	for cur.Next(ctx) {
-		cur.Decode(&temp)
-		media = append(media, temp)
+	} else {
+		media := []models.Media{}
+		temp := models.Media{}
+		for cur.Next(ctx) {
+			cur.Decode(&temp)
+			media = append(media, temp)
+		}
+
+		json.NewEncoder(w).Encode(media)
 	}
 
-	json.NewEncoder(w).Encode(media)
 }
 
 func AddVideo(w http.ResponseWriter, r *http.Request) {
