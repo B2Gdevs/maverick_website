@@ -86,22 +86,27 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		res, err = http.Get(host + "/Media")
 	}
+	if err == nil {
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			fmt.Println("error occured trying to get media in handler")
+			log.Println(err)
+		}
+		defer res.Body.Close()
+		Media := []models.Media{}
+		json.Unmarshal(body, &Media)
+		data := struct {
+			Data []models.Media
+		}{
+			Data: Media,
+		}
 
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		fmt.Println("error occured trying to get media in handler")
-		log.Println(err)
-	}
-	defer res.Body.Close()
-	Media := []models.Media{}
-	json.Unmarshal(body, &Media)
-	data := struct {
-		Data []models.Media
-	}{
-		Data: Media,
+		temps.ExecuteTemplate(w, "index.html", data)
+	} else {
+		log.Println("error in handler: ")
+		log.Print(err)
 	}
 
-	temps.ExecuteTemplate(w, "index.html", data)
 	// Temp
 	// temps.ExecuteTemplate(w, "index.html", nil)
 }
