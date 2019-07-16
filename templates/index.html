@@ -4,11 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Maverick the GoDog</title>
+    <title>Maverick the BabaYaga</title>
+    <link rel="stylesheet" href="resources/css/index.css"/>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 </head>
 <body>
   <!-- NAVBAR!! -->
@@ -18,34 +16,86 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarText">
-        <ul class="navbar-nav mr-auto">
-          <li class="nav-item active">
-            <a class="nav-link" href="#">Watch me work! <span class="sr-only">(current)</span></a>
-          </li>
-        </ul>
+
         <span class="navbar-text">
-          Maverick the GoDog!
+          Maverick the BabaYaga!
         </span>
       </div>
     </nav>
-  <!-- NAVBAR!! -->
+  <!-- END NAVBAR!! -->
   <div class="container">
+      <div class="row">
+        <div class="col-lg-2"></div>
+        <div class="col-lg-8 media-form">
+            <!--- \\\\\\\Post-->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">A Maverick Moment</h3>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="/Media" enctype="multipart/form-data">
+                        <div class="tab-content" id="myTabContent">
+                            <div class="tab-pane fade show active" id="posts" role="tabpanel" aria-labelledby="posts-tab">
+                                <div class="form-group">
+                                    <label for="post-title">Title</label>
+                                    <input class="form-control text" name="Title" id="post-title" rows="3" placeholder="Maverick Being Cute"></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="description">Description</label>
+                                    <textarea class="form-control" name="Description" id="description" rows="3" placeholder="What is Maverick doing?"></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <div class="custom-file">
+                                        <input type="file" name="CustomFile" class="custom-file-input" id="customFile">
+                                        <label class="custom-file-label" for="customFile" id="customFileLabel">Upload an image or video</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="btn-toolbar justify-content-between">
+                            <div class="btn-group">
+                                <button type="submit" class="btn btn-primary">share</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- Post /////-->
+          <div class="col-lg-2"></div>
+        </div>
+
+      </div>
     {{ range .Data }}
       <div class="row">
-        <div class="col-lg-12 text-center"><h2>{{.Title}}</h2></div>
-        <div class="col-lg-4 text-center">{{.Description}}</div>
-        <div class="col-lg-8"> 
-        {{if .IsVideo}}
-          <video  controls="controls" width="685" height="525">
-            <source src="{{.FilePath}}">
-          </video>  
-        {{end}}
-        {{if .IsPhoto}}
-        <img src="{{.FilePath}}"/>
-        {{end}}
+        <div class="col-lg-2"></div>
+        <div class="col-lg-8">
+            <div class="card text-center">
+                <div class="card-header">
+                    {{.Title}}
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{.Description}}</p>
+                    {{if .IsVideo}}
+                        <video controls="controls">
+                            <source src="{{.FilePath}}">
+                        </video>  
+                    {{end}}
+                    {{if .IsPhoto}}
+                        <img class="post-image" src="{{.FilePath}}"/>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2"> 
+
         </div>
       </div>
     {{ end }}
   </div>
+  <script src="resources/js/index.js"></script>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 </body>
 </html>

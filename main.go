@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
-	"io"
 	"io/ioutil"
 	"log"
 	"maverick_website/models"
@@ -14,10 +13,10 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"path/filepath"
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/h2non/filetype"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -37,46 +36,6 @@ var temps, _ = template.ParseGlob("./templates/*.html")
 // Static folder
 var staticLoc = "./static"
 var staticURL = "./resources"
-
-func copyFile(src string, dst string) error {
-	sfi, err := os.Stat(src)
-	if err != nil {
-		fmt.Printf("Something wrong with %s.", src)
-		return err
-	}
-
-	if !sfi.Mode().IsRegular() {
-		// cannot copy non-regular files (e.g., directories,
-		// symlinks, devices, etc.)
-		return fmt.Errorf("CopyFile: non-regular source file %s (%q)", sfi.Name(), sfi.Mode().String())
-	}
-
-	err = copyContent(src, dst)
-	return err
-}
-
-func copyContent(src string, dst string) error {
-	fout, err := os.Create(dst)
-	defer fout.Close()
-	if err != nil {
-		fmt.Printf("Couldn't create file. %s", dst)
-		log.Println(err)
-	}
-
-	fin, err := os.Open(src)
-	if err != nil {
-		fmt.Printf("Couldn't open file. %s", src)
-		log.Println(err)
-	}
-	defer fin.Close()
-
-	_, err = io.Copy(fout, fin)
-	if err != nil {
-		fmt.Printf("Could not copy %s to %s", src, dst)
-		log.Println(err)
-	}
-	return err
-}
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	var res *http.Response
@@ -107,15 +66,12 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		log.Print(err)
 	}
 
-	// Temp
-	// temps.ExecuteTemplate(w, "index.html", nil)
 }
 
 func GetAllMedia(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	// returns nil in cur if ip isn't whitelisted at the database.
 	cur, err := collection.Find(nil, bson.M{})
-
 	defer cur.Close(ctx)
 	if err != nil {
 		fmt.Print("error getting files")
@@ -173,43 +129,41 @@ func GetAllPhotos(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func AddVideo(w http.ResponseWriter, r *http.Request) {
+func AddMedia(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	data := models.Media{}
-	json.NewDecoder(r.Body).Decode(&data)
-	data.IsVideo = true
-	temp := data.FilePath
-	data.FilePath = path.Join(staticURL, filepath.Base(data.FilePath))
-	if err := copyFile(temp, path.Join(staticLoc, filepath.Base(data.FilePath))); err != nil {
-		log.Println("error when copying file.")
+	r.ParseMultipartForm(32 << 20)
+
+	file, handle, err := r.FormFile("CustomFile")
+	if err != nil {
+		log.Println("Couldn't retrieve file from html.")
 		log.Println(err)
 	}
+	defer file.Close()
+	fileBytes, _ := ioutil.ReadAll(file)
 
-	_, err := collection.InsertOne(ctx, data)
+	data := models.Media{
+		Title:       r.Form["Title"][0],
+		Description: r.Form["Description"][0],
+		FilePath:    path.Join(staticURL, handle.Filename),
+		IsPhoto:     filetype.IsImage(fileBytes),
+		IsVideo:     filetype.IsVideo(fileBytes),
+	}
+
+	newFile, err := os.Create(path.Join(staticLoc, handle.Filename))
+	if err != nil {
+		log.Println("Couldn't create new file to store media data.")
+		log.Println(err)
+	}
+	defer newFile.Close()
+	newFile.Write(fileBytes)
+
+	_, err = collection.InsertOne(ctx, data)
 	if err != nil {
 		log.Println(err)
 	}
 }
 
-func AddPhoto(w http.ResponseWriter, r *http.Request) {
-	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	data := models.Media{}
-	json.NewDecoder(r.Body).Decode(&data)
-	data.IsPhoto = true
-	temp := data.FilePath
-	filepath.Base(data.FilePath)
-	data.FilePath = path.Join(staticURL, filepath.Base(data.FilePath))
-	if err := copyFile(temp, path.Join(staticLoc, filepath.Base(data.FilePath))); err != nil {
-		log.Println("error when copying file.")
-		log.Println(err)
-	}
-	_, err := collection.InsertOne(ctx, data)
-	if err != nil {
-		log.Println(err)
-	}
-}
-
-func deleteMedia(w http.ResponseWriter, r *http.Request) {
+func DeleteMedia(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	data := models.Media{}
 	json.NewDecoder(r.Body).Decode(&data)
@@ -226,16 +180,13 @@ func ConnectMongo(connection string) *mongo.Client {
 }
 
 func main() {
-	fmt.Print(collection)
 	r := mux.NewRouter()
 	r.HandleFunc("/", handler)
 	r.HandleFunc("/Media", GetAllMedia).Methods("GET")
+	r.HandleFunc("/Media", DeleteMedia).Methods("DELETE")
+	r.HandleFunc("/Media", AddMedia).Methods("POST")
 	r.HandleFunc("/Videos", GetAllVideos).Methods("GET")
-	r.HandleFunc("/Videos", AddVideo).Methods("POST")
-	r.HandleFunc("/Videos", deleteMedia).Methods("DELETE")
 	r.HandleFunc("/Photos", GetAllPhotos).Methods("GET")
-	r.HandleFunc("/Photos", AddPhoto).Methods("POST")
-	r.HandleFunc("/Photos", deleteMedia).Methods("DELETE")
 	r.PathPrefix("/resources/").Handler(http.StripPrefix("/resources", http.FileServer(http.Dir(staticLoc))))
 
 	log.Fatal(http.ListenAndServe(":"+port, r))
