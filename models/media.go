@@ -6,4 +6,5 @@ type Media struct {
 	FilePath    string
 	IsPhoto     bool
 	IsVideo     bool
+	Date        string
 }

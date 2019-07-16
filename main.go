@@ -81,7 +81,7 @@ func GetAllMedia(w http.ResponseWriter, r *http.Request) {
 		temp := models.Media{}
 		for cur.Next(ctx) {
 			cur.Decode(&temp)
-			media = append(media, temp)
+			media = append([]models.Media{temp}, media...)
 		}
 
 		json.NewEncoder(w).Encode(media)
@@ -101,7 +101,7 @@ func GetAllVideos(w http.ResponseWriter, r *http.Request) {
 		temp := models.Media{}
 		for cur.Next(ctx) {
 			cur.Decode(&temp)
-			media = append(media, temp)
+			media = append([]models.Media{temp}, media...)
 		}
 
 		json.NewEncoder(w).Encode(media)
@@ -121,7 +121,7 @@ func GetAllPhotos(w http.ResponseWriter, r *http.Request) {
 		temp := models.Media{}
 		for cur.Next(ctx) {
 			cur.Decode(&temp)
-			media = append(media, temp)
+			media = append([]models.Media{temp}, media...)
 		}
 
 		json.NewEncoder(w).Encode(media)
@@ -147,6 +147,7 @@ func AddMedia(w http.ResponseWriter, r *http.Request) {
 		FilePath:    path.Join(staticURL, handle.Filename),
 		IsPhoto:     filetype.IsImage(fileBytes),
 		IsVideo:     filetype.IsVideo(fileBytes),
+		Date:        time.Now().Format("01-02-2006"),
 	}
 
 	newFile, err := os.Create(path.Join(staticLoc, handle.Filename))
