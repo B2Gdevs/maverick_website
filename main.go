@@ -132,36 +132,43 @@ func GetAllPhotos(w http.ResponseWriter, r *http.Request) {
 func AddMedia(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 	r.ParseMultipartForm(32 << 20)
-
 	file, handle, err := r.FormFile("CustomFile")
 	if err != nil {
-		log.Println("Couldn't retrieve file from html.")
-		log.Println(err)
-	}
-	defer file.Close()
-	fileBytes, _ := ioutil.ReadAll(file)
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("POST request had no file attached."))
+	} else {
+		defer file.Close()
+		fileBytes, _ := ioutil.ReadAll(file)
 
-	data := models.Media{
-		Title:       r.Form["Title"][0],
-		Description: r.Form["Description"][0],
-		FilePath:    path.Join(staticURL, handle.Filename),
-		IsPhoto:     filetype.IsImage(fileBytes),
-		IsVideo:     filetype.IsVideo(fileBytes),
-		Date:        time.Now().Format("01-02-2006"),
+		if !filetype.IsVideo(fileBytes) && !filetype.IsImage(fileBytes) {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("POST request had no image or video."))
+		} else {
+			data := models.Media{
+				Title:       r.Form["Title"][0],
+				Description: r.Form["Description"][0],
+				FilePath:    path.Join(staticURL, handle.Filename),
+				IsPhoto:     filetype.IsImage(fileBytes),
+				IsVideo:     filetype.IsVideo(fileBytes),
+				Date:        time.Now().Format("01-02-2006"),
+			}
+
+			newFile, err := os.Create(path.Join(staticLoc, handle.Filename))
+			if err != nil {
+				log.Println("Couldn't create new file to store media data.")
+				log.Println(err)
+			}
+			defer newFile.Close()
+			newFile.Write(fileBytes)
+
+			_, err = collection.InsertOne(ctx, data)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+
 	}
 
-	newFile, err := os.Create(path.Join(staticLoc, handle.Filename))
-	if err != nil {
-		log.Println("Couldn't create new file to store media data.")
-		log.Println(err)
-	}
-	defer newFile.Close()
-	newFile.Write(fileBytes)
-
-	_, err = collection.InsertOne(ctx, data)
-	if err != nil {
-		log.Println(err)
-	}
 }
 
 func DeleteMedia(w http.ResponseWriter, r *http.Request) {
