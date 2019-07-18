@@ -131,7 +131,8 @@ func GetAllPhotos(w http.ResponseWriter, r *http.Request) {
 
 func AddMedia(w http.ResponseWriter, r *http.Request) {
 	ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-	r.ParseMultipartForm(32 << 20)
+	r.Body = http.MaxBytesReader(w, r.Body, 16*1024*1024) // 16MB
+	r.ParseMultipartForm(16 << 20)
 	file, handle, err := r.FormFile("CustomFile")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
