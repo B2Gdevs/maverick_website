@@ -107,6 +107,10 @@ func GetAllMedia(w http.ResponseWriter, r *http.Request) {
 			media = append([]models.Media{temp}, media...)
 		}
 
+		for _, v := range media {
+			log.Println(v)
+		}
+
 		json.NewEncoder(w).Encode(media)
 	}
 }
