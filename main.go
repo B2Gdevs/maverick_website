@@ -9,12 +9,16 @@ import (
 	"log"
 	"maverick_website/models"
 	"maverick_website/utility"
+	"mime/multipart"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/gorilla/mux"
 	"github.com/h2non/filetype"
 	"go.mongodb.org/mongo-driver/bson"
@@ -22,20 +26,38 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var jsonData, err = utility.GetDebugParams("app_config.json")
-var host = utility.GetEnv("HOST", jsonData["HOST"])
-var port = utility.GetEnv("PORT", jsonData["PORT"])
-var mongoPass = utility.GetEnv("MONGOPASS", jsonData["MONGOPASS"])
+var (
+	jsonData, _ = utility.GetDebugParams("app_config.json")
+	host        = utility.GetEnv("HOST", jsonData["HOST"])
+	port        = utility.GetEnv("PORT", jsonData["PORT"])
+	mongoPass   = utility.GetEnv("MONGOPASS", jsonData["MONGOPASS"])
 
-var databaseConnection = fmt.Sprintf("mongodb+srv://Ben:%s@maverick-yqcfp.mongodb.net/test?retryWrites=true&w=majority", url.QueryEscape(mongoPass))
-var client = ConnectMongo(databaseConnection)
-var collection = client.Database("Maverick").Collection("Website")
+	databaseConnection = fmt.Sprintf("mongodb+srv://Ben:%s@maverick-yqcfp.mongodb.net/test?retryWrites=true&w=majority", url.QueryEscape(mongoPass))
+	client             = ConnectMongo(databaseConnection)
+	collection         = client.Database("Maverick").Collection("Website")
 
-var temps, _ = template.ParseGlob("./templates/*.html")
+	sess, _ = session.NewSession(&aws.Config{
+		Region: aws.String("us-east-1"),
+		Credentials: credentials.NewStaticCredentials(
+			utility.GetEnv("AWS_ACCESS_KEY_ID", jsonData["AWS_ACCESS_KEY_ID"]),
+			utility.GetEnv("AWS_SECRET_ACCESS_KEY", jsonData["AWS_SECRET_ACCESS_KEY"]),
+			""),
+	})
+	uploader = s3manager.NewUploader(sess)
 
-// Static folder
-var staticLoc = "./static"
-var staticURL = "./resources"
+	temps, _ = template.ParseGlob("./templates/*.html")
+
+	// Static folder
+	staticLoc = utility.GetEnv("S3URL", jsonData["S3URL"])
+)
+
+func uploadFile(file multipart.File, fileHandle *multipart.FileHeader) {
+	uploader.Upload(&s3manager.UploadInput{
+		Bucket: aws.String(utility.GetEnv("S3BUCKET", jsonData["S3BUCKET"])),
+		Key:    aws.String("/media/" + fileHandle.Filename),
+		Body:   file,
+	})
+}
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	var res *http.Response
@@ -86,7 +108,6 @@ func GetAllMedia(w http.ResponseWriter, r *http.Request) {
 
 		json.NewEncoder(w).Encode(media)
 	}
-
 }
 
 func GetAllVideos(w http.ResponseWriter, r *http.Request) {
@@ -103,10 +124,8 @@ func GetAllVideos(w http.ResponseWriter, r *http.Request) {
 			cur.Decode(&temp)
 			media = append([]models.Media{temp}, media...)
 		}
-
 		json.NewEncoder(w).Encode(media)
 	}
-
 }
 
 func GetAllPhotos(w http.ResponseWriter, r *http.Request) {
@@ -123,10 +142,8 @@ func GetAllPhotos(w http.ResponseWriter, r *http.Request) {
 			cur.Decode(&temp)
 			media = append([]models.Media{temp}, media...)
 		}
-
 		json.NewEncoder(w).Encode(media)
 	}
-
 }
 
 func AddMedia(w http.ResponseWriter, r *http.Request) {
@@ -145,23 +162,15 @@ func AddMedia(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("POST request had no image or video."))
 		} else {
+			uploadFile(file, handle)
 			data := models.Media{
 				Title:       r.Form["Title"][0],
 				Description: r.Form["Description"][0],
-				FilePath:    path.Join(staticURL, handle.Filename),
+				FilePath:    "https://" + path.Join(staticLoc, handle.Filename),
 				IsPhoto:     filetype.IsImage(fileBytes),
 				IsVideo:     filetype.IsVideo(fileBytes),
 				Date:        time.Now().Format("01-02-2006"),
 			}
-
-			newFile, err := os.Create(path.Join(staticLoc, handle.Filename))
-			if err != nil {
-				log.Println("Couldn't create new file to store media data.")
-				log.Println(err)
-			}
-			defer newFile.Close()
-			newFile.Write(fileBytes)
-
 			_, err = collection.InsertOne(ctx, data)
 			if err != nil {
 				log.Println(err)
@@ -196,7 +205,7 @@ func main() {
 	r.HandleFunc("/Media", AddMedia).Methods("POST")
 	r.HandleFunc("/Videos", GetAllVideos).Methods("GET")
 	r.HandleFunc("/Photos", GetAllPhotos).Methods("GET")
-	r.PathPrefix("/resources/").Handler(http.StripPrefix("/resources", http.FileServer(http.Dir(staticLoc))))
+	r.PathPrefix("/resources/").Handler(http.StripPrefix("/resources", http.FileServer(http.Dir("./static"))))
 
 	log.Fatal(http.ListenAndServe(":"+port, r))
 
