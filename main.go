@@ -176,8 +176,9 @@ func AddMedia(w http.ResponseWriter, r *http.Request) {
 				log.Println(err)
 			}
 			f, _ := os.Open("temp")
-			defer f.Close()
 			uploadFile(f, handle)
+			f.Close()
+			os.Remove("temp")
 
 			_, err = collection.InsertOne(ctx, data)
 			if err != nil {
