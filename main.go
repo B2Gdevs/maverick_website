@@ -12,6 +12,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"time"
 
@@ -162,7 +163,6 @@ func AddMedia(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusBadRequest)
 			w.Write([]byte("POST request had no image or video."))
 		} else {
-			uploadFile(file, handle)
 			data := models.Media{
 				Title:       r.Form["Title"][0],
 				Description: r.Form["Description"][0],
@@ -171,6 +171,14 @@ func AddMedia(w http.ResponseWriter, r *http.Request) {
 				IsVideo:     filetype.IsVideo(fileBytes),
 				Date:        time.Now().Format("01-02-2006"),
 			}
+			err = ioutil.WriteFile("temp", fileBytes, 777)
+			if err != nil {
+				log.Println(err)
+			}
+			f, _ := os.Open("temp")
+			defer f.Close()
+			uploadFile(f, handle)
+
 			_, err = collection.InsertOne(ctx, data)
 			if err != nil {
 				log.Println(err)
