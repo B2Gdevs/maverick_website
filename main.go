@@ -166,7 +166,7 @@ func AddMedia(w http.ResponseWriter, r *http.Request) {
 			data := models.Media{
 				Title:       r.Form["Title"][0],
 				Description: r.Form["Description"][0],
-				FilePath:    "https://" + path.Join(staticLoc, handle.Filename),
+				FilePath:    "http://" + path.Join(staticLoc, handle.Filename),
 				IsPhoto:     filetype.IsImage(fileBytes),
 				IsVideo:     filetype.IsVideo(fileBytes),
 				Date:        time.Now().Format("01-02-2006"),
